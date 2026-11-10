@@ -1,0 +1,30 @@
+# Image construite depuis l'espace de travail local, avant publication sur npm.
+# Contexte : le dossier parent, qui contient agenteca-core et agenteca-server.
+#   docker build -f agenteca-server/docker/Dockerfile.workspace -t agenteca-server:dev .
+FROM node:22-bookworm-slim AS build
+WORKDIR /ws
+RUN echo '{"private":true,"workspaces":["agenteca-core","agenteca-server"]}' > package.json
+COPY agenteca-core/package.json agenteca-core/tsconfig.json agenteca-core/tsconfig.build.json ./agenteca-core/
+COPY agenteca-core/src ./agenteca-core/src
+COPY agenteca-server/package.json agenteca-server/tsconfig.json agenteca-server/tsconfig.build.json agenteca-server/openapi.json ./agenteca-server/
+COPY agenteca-server/src ./agenteca-server/src
+RUN npm install --no-audit --no-fund \
+ && npm run build -w agenteca-core \
+ && npm run build -w agenteca-server \
+ && npm prune --omit=dev
+
+FROM node:22-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production AGENTECA_DATA_DIR=/data PORT=8080
+WORKDIR /ws
+COPY --from=build /ws/node_modules ./node_modules
+COPY --from=build /ws/agenteca-core/package.json ./agenteca-core/package.json
+COPY --from=build /ws/agenteca-core/dist ./agenteca-core/dist
+COPY --from=build /ws/agenteca-server/package.json /ws/agenteca-server/openapi.json ./agenteca-server/
+COPY --from=build /ws/agenteca-server/dist ./agenteca-server/dist
+RUN mkdir -p /data && chown node:node /data
+USER node
+VOLUME /data
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+CMD ["node", "agenteca-server/dist/main.js"]

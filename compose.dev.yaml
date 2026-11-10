@@ -1,0 +1,12 @@
+# Construit les images depuis l'espace de travail local (dépôts côte à côte),
+# tant que les paquets et les images ne sont pas publiés.
+services:
+  server:
+    image: agenteca-server:dev
+    build:
+      context: ..
+      dockerfile: agenteca-server/docker/Dockerfile.workspace
+  web:
+    image: agenteca-web:dev
+    build:
+      context: ../agenteca-web
