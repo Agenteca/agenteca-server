@@ -1,0 +1,19 @@
+{$AGENTECA_DOMAIN} {
+	encode zstd gzip
+
+	# The API and its health check go to the server; everything else is the web catalog.
+	@api path /api/* /healthz
+	handle @api {
+		reverse_proxy server:8080
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
