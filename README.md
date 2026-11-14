@@ -118,7 +118,7 @@ SQLite, migrations appliquées au démarrage (`src/db.ts`) : `users`, `tokens`, 
 npm test
 ```
 
-Les tests créent de vrais dépôts git temporaires et une base en mémoire ; aucun accès réseau. La CI de ce dépôt ne peut passer sur GitHub qu'une fois `@agenteca/core` publié sur npm.
+Les tests créent de vrais dépôts git temporaires et une base en mémoire ; aucun accès réseau. En CI, `agenteca-core` est cloné à côté de ce dépôt : aucun paquet publié sur npm n'est nécessaire.
 
 ## Licence
 
