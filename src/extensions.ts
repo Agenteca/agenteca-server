@@ -1,8 +1,8 @@
 /**
- * Points d'extension du serveur. Le dépôt premium `agenteca-ee` en fournit des
- * implémentations (SSO, SCIM, droits fins, journal d'audit, validation avant
- * publication). Sans lui, les implémentations par défaut ci-dessous s'appliquent
- * et le serveur fonctionne normalement.
+ * Extension points of the server. The premium repository `agenteca-ee` provides
+ * implementations of them (SSO, SCIM, fine-grained rights, audit log, validation
+ * before publication). Without it, the default implementations below apply
+ * and the server works normally.
  */
 
 export type Role = 'admin' | 'editor' | 'reader';
@@ -28,16 +28,16 @@ export type Action =
   | 'package.delete'
   | 'user.manage';
 
-/** Authentification : résout l'utilisateur d'une requête. L'édition premium y branche OIDC et SAML. */
+/** Authentication: resolves the user of a request. The premium edition plugs OIDC and SAML into it. */
 export interface AuthProvider {
   readonly name: string;
-  /** Retourne l'utilisateur, `null` si la requête n'est pas authentifiée, `undefined` pour laisser la main au fournisseur suivant. */
+  /** Returns the user, `null` if the request is not authenticated, `undefined` to hand over to the next provider. */
   authenticate(request: Request): Promise<User | null | undefined>;
 }
 
-/** Décision d'accès. L'édition premium y branche rôles personnalisés et droits par équipe ou dossier. */
+/** Access decision. The premium edition plugs custom roles and per-team or per-folder rights into it. */
 export interface AccessPolicy {
-  /** `membershipRole` : rôle de l'utilisateur dans ce catalogue, s'il en est membre. */
+  /** `membershipRole`: role of the user in this catalog, if they are a member. */
   can(user: User | null, action: Action, catalog?: CatalogRef, membershipRole?: Role): boolean;
 }
 
@@ -50,7 +50,7 @@ export interface AuditEvent {
   details?: Record<string, unknown>;
 }
 
-/** Journal d'audit. Par défaut : une ligne JSON par événement sur la sortie standard. */
+/** Audit log. By default: one JSON line per event on standard output. */
 export interface AuditSink {
   record(event: AuditEvent): void | Promise<void>;
 }
@@ -63,15 +63,15 @@ export interface PublishRequest {
   scanBlocked: boolean;
 }
 
-/** Circuit de validation avant publication. Par défaut : publication immédiate. */
+/** Validation workflow before publication. By default: immediate publication. */
 export interface PublishGate {
   review(request: PublishRequest): Promise<{ decision: 'publish' | 'pending' | 'reject'; reason?: string }>;
 }
 
-/** Approvisionnement des comptes (SCIM). Aucune implémentation par défaut. */
+/** Account provisioning (SCIM). No default implementation. */
 export interface ProvisioningSource {
   readonly name: string;
-  /** Monte ses routes (par exemple `/scim/v2`) sur l'application. */
+  /** Mounts its routes (for example `/scim/v2`) on the application. */
   mount(app: unknown): void;
 }
 
@@ -81,19 +81,19 @@ export interface ServerExtensions {
   auditSink: AuditSink;
   publishGate: PublishGate;
   provisioning: ProvisioningSource[];
-  /** Nom de l'édition, exposé par `/healthz`. */
+  /** Name of the edition, exposed by `/healthz`. */
   edition: string;
 }
 
 const RANK: Record<Role, number> = { reader: 1, editor: 2, admin: 3 };
 
-/** Politique de base, gratuite : trois rôles (admin, éditeur, lecteur), catalogues publics ou privés. */
+/** Free base policy: three roles (admin, editor, reader), public or private catalogs. */
 export const defaultAccessPolicy: AccessPolicy = {
   can(user, action, catalog, membershipRole) {
     const global = user ? RANK[user.role] : 0;
     const member = membershipRole ? RANK[membershipRole] : 0;
-    // Catalogue privé : seuls ses membres et les administrateurs y ont un rôle.
-    // Catalogue public : le rôle global s'applique, éventuellement relevé par un rôle de membre.
+    // Private catalog: only its members and the administrators have a role in it.
+    // Public catalog: the global role applies, possibly raised by a member role.
     const effective =
       catalog?.visibility === 'private'
         ? Math.max(member, global === RANK.admin ? RANK.admin : 0)
@@ -139,9 +139,9 @@ export function defaultExtensions(): ServerExtensions {
 }
 
 /**
- * Charge le module premium s'il est installé. Son absence n'est pas une erreur ;
- * un module présent mais défaillant en est une, pour ne pas démarrer sans les
- * contrôles d'accès attendus.
+ * Loads the premium module if it is installed. Its absence is not an error;
+ * a module that is present but broken is one, so as not to start without the
+ * expected access controls.
  */
 export async function loadExtensions(
   moduleName = process.env.AGENTECA_EE_MODULE ?? '@agenteca/ee',

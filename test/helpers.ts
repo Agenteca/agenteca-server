@@ -60,7 +60,7 @@ export interface Harness {
   ): Promise<{ status: number; body: any }>;
 }
 
-/** Serveur en mémoire avec un compte par rôle et le catalogue « default ». */
+/** In-memory server with one account per role and the "default" catalog. */
 export async function harness(
   mirrors: Record<string, string> = {},
   extensions?: ServerExtensions,
@@ -110,7 +110,7 @@ export async function harness(
     try {
       body = JSON.parse(text);
     } catch {
-      // réponse non JSON
+      // non-JSON answer
     }
     return { status: res.status, body };
   };

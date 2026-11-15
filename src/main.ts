@@ -8,9 +8,9 @@ import { openDb } from './db.js';
 import { loadExtensions } from './extensions.js';
 
 /**
- * Configuration par variables d'environnement :
+ * Configuration through environment variables:
  *   PORT (8080), HOST (0.0.0.0), AGENTECA_DATA_DIR (./data), AGENTECA_PUBLIC_URL,
- *   AGENTECA_ADMIN_EMAIL, AGENTECA_ADMIN_PASSWORD (premier démarrage seulement).
+ *   AGENTECA_ADMIN_EMAIL, AGENTECA_ADMIN_PASSWORD (first start only).
  */
 async function main(): Promise<void> {
   const dataDir = path.resolve(process.env.AGENTECA_DATA_DIR ?? './data');
@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   }
   const admin = bootstrapAdmin(db, process.env.AGENTECA_ADMIN_EMAIL, process.env.AGENTECA_ADMIN_PASSWORD);
   if (admin?.generatedPassword) {
-    // Affiché une seule fois : seule l'empreinte du mot de passe est conservée.
+    // Shown only once: only the hash of the password is kept.
     process.stdout.write(
       `First start — administrator account created: ${admin.email}\nPassword (shown only once): ${admin.generatedPassword}\n`,
     );

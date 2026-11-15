@@ -19,7 +19,7 @@ export interface AppOptions {
   db: Db;
   extensions?: ServerExtensions;
   indexer?: IndexerOptions;
-  /** Adresse publique du serveur, utilisée dans la documentation OpenAPI. */
+  /** Public address of the server, used in the OpenAPI documentation. */
   publicUrl?: string;
 }
 
@@ -33,7 +33,7 @@ class HttpError extends Error {
   }
 }
 
-// --- Schémas ---------------------------------------------------------------
+// --- Schemas ---------------------------------------------------------------
 
 const ErrorSchema = z.object({ error: z.object({ code: z.string(), message: z.string() }) }).openapi('Error');
 const RoleSchema = z.enum(['admin', 'editor', 'reader']).openapi('Role');
@@ -159,7 +159,7 @@ const SlugParam = z.object({
 
 type Env = { Variables: { user: User | null } };
 
-/** Construit l'application HTTP. Toute la logique d'accès passe par `extensions.accessPolicy`. */
+/** Builds the HTTP application. All access logic goes through `extensions.accessPolicy`. */
 export function createApp(options: AppOptions): OpenAPIHono<Env> {
   const { db } = options;
   const ext = options.extensions ?? defaultExtensions();
@@ -249,7 +249,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     db.prepare('SELECT * FROM catalogs WHERE slug = ?').get(slug) as CatalogRow | undefined;
   const catalogById = (id: number): CatalogRow =>
     db.prepare('SELECT * FROM catalogs WHERE id = ?').get(id) as CatalogRow;
-  /** Un catalogue privé illisible est indiscernable d'un catalogue absent. */
+  /** An unreadable private catalog cannot be told apart from a missing catalog. */
   const readableCatalog = (c: Context<Env>, slug: string): CatalogRow => {
     const catalog = catalogBySlug(slug);
     if (!catalog || !allowed(c, 'catalog.read', catalog))
@@ -358,7 +358,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     (c) => {
       const { email, password } = c.req.valid('json');
       const row = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim()) as UserRow | undefined;
-      // Même réponse que le compte existe ou non.
+      // Same answer whether or not the account exists.
       if (!row || !verifyPassword(password, row.password_hash)) {
         void ext.auditSink.record({
           at: new Date().toISOString(),
@@ -1107,7 +1107,7 @@ export function openApiConfig(publicUrl?: string) {
   };
 }
 
-/** Document OpenAPI 3.1 du serveur, sans démarrer de serveur. */
+/** OpenAPI 3.1 document of the server, without starting a server. */
 export function buildOpenApiDocument(db: Db): unknown {
   return createApp({ db }).getOpenAPI31Document(openApiConfig());
 }

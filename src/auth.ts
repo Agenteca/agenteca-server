@@ -24,7 +24,7 @@ export function verifyPassword(password: string, stored: string): boolean {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-/** Seule l'empreinte d'un jeton est stockée : une fuite de la base ne donne aucun jeton utilisable. */
+/** Only the hash of a token is stored: a leak of the database yields no usable token. */
 export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -72,8 +72,8 @@ export function bearerToken(request: Request): string | undefined {
 }
 
 /**
- * Crée le premier administrateur si la base n'a aucun utilisateur. Sans mot de
- * passe fourni, un mot de passe aléatoire est généré et retourné une seule fois.
+ * Creates the first administrator if the database has no user. Without a
+ * password given, a random password is generated and returned only once.
  */
 export function bootstrapAdmin(
   db: Db,

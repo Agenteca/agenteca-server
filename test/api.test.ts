@@ -14,7 +14,7 @@ const SOURCE = 'acme/demo-pack';
 const ID = 'github.com/acme/demo-pack';
 
 describe('catalogue', () => {
-  it('indexe un dépôt, le rend cherchable et montre son contenu avant installation', async () => {
+  it('indexes a repository, makes it searchable and shows its content before installation', async () => {
     const repo = await gitRepo(demoPackage('1.0.0'), 'v1.0.0');
     await commit(repo, demoPackage('1.1.0'), 'v1.1.0');
     const h = await harness({ [ID]: repo });
@@ -41,7 +41,7 @@ describe('catalogue', () => {
     });
     const id = created.body.package.id;
 
-    // Recherche publique, sans authentification.
+    // Public search, without authentication.
     const all = await h.call('GET', '/api/v1/packages');
     expect(all.body).toMatchObject({ total: 1, page: 1, pageSize: 20 });
     expect((await h.call('GET', '/api/v1/packages?q=relecture+code')).body.total).toBe(1);
@@ -77,14 +77,14 @@ describe('catalogue', () => {
     expect((await h.call('GET', `/api/v1/packages/${id}/versions/9.9.9`)).status).toBe(404);
     expect((await h.call('GET', `/api/v1/packages/${id}/versions/1.1.0/file?path=absent`)).status).toBe(404);
 
-    // Rafraîchissement après un nouveau tag.
+    // Refresh after a new tag.
     await commit(repo, demoPackage('1.2.0'), 'v1.2.0');
     const refreshed = await h.call('POST', `/api/v1/packages/${id}/refresh`, { token: h.tokens.editor });
     expect(refreshed.body.package.latestVersion).toBe('1.2.0');
     expect((await h.call('GET', `/api/v1/packages/${id}/versions`)).body.items).toHaveLength(3);
   });
 
-  it('signale une version dont le scan est bloquant', async () => {
+  it('reports a version whose scan is blocking', async () => {
     const hidden = [...'evil'].map((c) => String.fromCodePoint(0xe0000 + c.charCodeAt(0))).join('');
     const repo = await gitRepo(
       demoPackage('1.0.0', {
@@ -102,7 +102,7 @@ describe('catalogue', () => {
     expect(detail.body.findings[0]).toMatchObject({ ruleId: 'AHUB-U001', severity: 'critical' });
   });
 
-  it('indexe la branche par défaut quand le dépôt n’a pas de tag', async () => {
+  it('indexes the default branch when the repository has no tag', async () => {
     const repo = await gitRepo({ 'SKILL.md': '---\nname: solo\ndescription: Un skill seul.\n---\nCorps\n' });
     const h = await harness({ 'github.com/acme/solo': repo });
     const created = await h.call('POST', '/api/v1/packages', {
@@ -117,7 +117,7 @@ describe('catalogue', () => {
     });
   });
 
-  it('refuse les sources invalides ou illisibles', async () => {
+  it('refuses invalid or unreadable sources', async () => {
     const empty = await gitRepo({ 'README.md': 'rien' });
     const h = await harness({ 'github.com/acme/vide': empty });
     const local = await h.call('POST', '/api/v1/packages', {
@@ -134,7 +134,7 @@ describe('catalogue', () => {
     expect((await h.call('GET', '/api/v1/packages')).body.total).toBe(0);
   });
 
-  it('exporte le catalogue aux formats de marketplace natifs', async () => {
+  it('exports the catalog to the native marketplace formats', async () => {
     const plugin = await gitRepo(
       {
         '.claude-plugin/plugin.json': JSON.stringify({
@@ -174,8 +174,8 @@ describe('catalogue', () => {
   });
 });
 
-describe('comptes et rôles', () => {
-  it('ouvre et ferme une session, sans révéler si un compte existe', async () => {
+describe('accounts and roles', () => {
+  it('opens and closes a session, without revealing whether an account exists', async () => {
     const h = await harness();
     const wrong = await h.call('POST', '/api/v1/auth/login', {
       body: { email: 'admin@example.test', password: 'faux' },
@@ -193,7 +193,7 @@ describe('comptes et rôles', () => {
     expect(login.body.user).toMatchObject({ email: 'admin@example.test', role: 'admin' });
     expect(new Date(login.body.expiresAt).getTime()).toBeGreaterThan(Date.now());
     expect((await h.call('GET', '/api/v1/me', { token: login.body.token })).body.role).toBe('admin');
-    // Les jetons et mots de passe ne sont jamais stockés en clair.
+    // Tokens and passwords are never stored in clear.
     const stored =
       JSON.stringify(h.db.prepare('SELECT * FROM tokens').all()) +
       JSON.stringify(h.db.prepare('SELECT * FROM users').all());
@@ -208,7 +208,7 @@ describe('comptes et rôles', () => {
     );
   });
 
-  it('refuse un jeton de session expiré', async () => {
+  it('refuses an expired session token', async () => {
     const h = await harness();
     const login = await h.call('POST', '/api/v1/auth/login', {
       body: { email: 'reader@example.test', password: 'mot-de-passe-reader' },
@@ -217,13 +217,13 @@ describe('comptes et rôles', () => {
     expect((await h.call('GET', '/api/v1/me', { token: login.body.token })).status).toBe(401);
   });
 
-  it('crée et révoque des jetons d’API', async () => {
+  it('creates and revokes API tokens', async () => {
     const h = await harness();
     const created = await h.call('POST', '/api/v1/tokens', { token: h.tokens.editor, body: { name: 'ci' } });
     expect(created.status).toBe(201);
     expect((await h.call('GET', '/api/v1/me', { token: created.body.token })).body.role).toBe('editor');
     expect((await h.call('GET', '/api/v1/tokens', { token: h.tokens.editor })).body.items).toHaveLength(2);
-    // Un utilisateur ne révoque que ses propres jetons.
+    // A user only revokes their own tokens.
     expect(
       (await h.call('DELETE', `/api/v1/tokens/${created.body.id}`, { token: h.tokens.reader })).status,
     ).toBe(404);
@@ -233,7 +233,7 @@ describe('comptes et rôles', () => {
     expect((await h.call('GET', '/api/v1/me', { token: created.body.token })).status).toBe(401);
   });
 
-  it('applique les trois rôles de base', async () => {
+  it('applies the three base roles', async () => {
     const repo = await gitRepo(demoPackage('1.0.0'), 'v1.0.0');
     const h = await harness({ [ID]: repo });
     const body = { source: SOURCE };
@@ -277,7 +277,7 @@ describe('comptes et rôles', () => {
     expect((await h.call('GET', `/api/v1/packages/${id}`)).status).toBe(404);
   });
 
-  it('cache entièrement un catalogue privé à qui n’en est pas membre', async () => {
+  it('entirely hides a private catalog from non-members', async () => {
     const repo = await gitRepo(demoPackage('1.0.0'), 'v1.0.0');
     const h = await harness({ [ID]: repo });
     expect(
@@ -302,7 +302,7 @@ describe('comptes et rôles', () => {
     });
     const id = created.body.package.id;
 
-    // Anonyme et éditeur global non membre : le catalogue n'existe pas pour eux.
+    // Anonymous user and non-member global editor: the catalog does not exist for them.
     for (const token of [undefined, h.tokens.editor, h.tokens.reader]) {
       const opts = token ? { token } : {};
       expect((await h.call('GET', '/api/v1/catalogs', opts)).body.items.map((c: any) => c.slug)).toEqual([
@@ -325,7 +325,7 @@ describe('comptes et rôles', () => {
       ).status,
     ).toBe(404);
 
-    // Le lecteur devient membre éditeur de ce catalogue seulement.
+    // The reader becomes an editor member of this catalog only.
     expect(
       (
         await h.call('PUT', `/api/v1/catalogs/interne/members/${h.userIds.reader}`, {
@@ -359,7 +359,7 @@ describe('comptes et rôles', () => {
     expect((await h.call('GET', '/api/v1/packages', { token: h.tokens.reader })).body.total).toBe(0);
   });
 
-  it('décide les accès par la politique par défaut', () => {
+  it('decides access through the default policy', () => {
     const pub = { id: 1, slug: 'p', visibility: 'public' as const };
     const priv = { id: 2, slug: 'q', visibility: 'private' as const };
     const u = (role: 'admin' | 'editor' | 'reader') => ({ id: 1, email: 'x', role });
@@ -374,8 +374,8 @@ describe('comptes et rôles', () => {
   });
 });
 
-describe('points d’extension premium', () => {
-  it('laisse un module remplacer la politique d’accès, la validation et le journal', async () => {
+describe('premium extension points', () => {
+  it('lets a module replace the access policy, the validation and the log', async () => {
     const repo = await gitRepo(demoPackage('1.0.0'), 'v1.0.0');
     const events: AuditEvent[] = [];
     const h = await harness(
@@ -397,7 +397,7 @@ describe('points d’extension premium', () => {
       body: { source: SOURCE },
     });
     expect(created.body.package.status).toBe('pending');
-    // En attente de validation : invisible au public, visible de qui peut publier.
+    // Awaiting validation: invisible to the public, visible to whoever can publish.
     expect((await h.call('GET', '/api/v1/packages')).body.total).toBe(0);
     expect((await h.call('GET', `/api/v1/packages/${created.body.package.id}`)).status).toBe(404);
     expect(
@@ -412,7 +412,7 @@ describe('points d’extension premium', () => {
 });
 
 describe('contrat OpenAPI', () => {
-  it('sert un document OpenAPI 3.1 identique au fichier versionné', async () => {
+  it('serves an OpenAPI 3.1 document identical to the committed file', async () => {
     const h = await harness();
     const served = await h.call('GET', '/api/v1/openapi.json');
     expect(served.status).toBe(200);
@@ -424,11 +424,11 @@ describe('contrat OpenAPI', () => {
     });
     const db = openDb(':memory:');
     const committed = JSON.parse(readFileSync(new URL('../openapi.json', import.meta.url), 'utf8'));
-    // Si ce test échoue après un changement d'API : « npm run openapi », puis mettez à jour la version et le CHANGELOG.
+    // If this test fails after an API change: "npm run openapi", then update the version and the CHANGELOG.
     expect(JSON.parse(JSON.stringify(buildOpenApiDocument(db)))).toEqual(committed);
   });
 
-  it('répond en JSON aux routes inconnues', async () => {
+  it('answers unknown routes in JSON', async () => {
     const h = await harness();
     const r = await h.call('GET', '/api/v1/inconnu');
     expect([r.status, r.body.error.code]).toEqual([404, 'NOT_FOUND']);

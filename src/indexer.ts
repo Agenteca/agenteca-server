@@ -17,7 +17,7 @@ import type { Db, PackageRow } from './db.js';
 
 export interface IndexerOptions {
   env?: NodeJS.ProcessEnv;
-  /** Nombre maximal de versions (tags SemVer les plus récents) indexées par paquet. */
+  /** Maximum number of versions (most recent SemVer tags) indexed per package. */
   maxVersions?: number;
 }
 
@@ -43,7 +43,7 @@ function indexerContext(env: NodeJS.ProcessEnv | undefined): ProjectContext {
   return createContext({ cwd: os.tmpdir(), env: env ?? process.env });
 }
 
-/** Lit la source sans la référence : le serveur indexe plusieurs versions du même dépôt. */
+/** Reads the source without the reference: the server indexes several versions of the same repository. */
 export function parseSource(source: string): { ref: DepRef; base: string } {
   let ref: DepRef;
   try {
@@ -62,8 +62,8 @@ export function parseSource(source: string): { ref: DepRef; base: string } {
 }
 
 /**
- * Indexe un dépôt : lit ses tags, puis pour chaque version retenue lit le
- * manifeste, le contenu et le résultat du scan. Rien n'est exécuté.
+ * Indexes a repository: reads its tags, then for each version kept reads the
+ * manifest, the content and the result of the scan. Nothing is executed.
  */
 export async function indexPackage(
   db: Db,
@@ -91,7 +91,7 @@ export async function indexPackage(
   const targets: Array<{ version: string; ref: string | undefined }> = ordered
     .slice(0, opts.maxVersions ?? 10)
     .map((v) => ({ version: v, ref: versions.get(v)! }));
-  // Sans tag SemVer, la branche par défaut tient lieu de version.
+  // Without a SemVer tag, the default branch stands in for a version.
   if (targets.length === 0) targets.push({ version: refs.defaultBranch ?? 'HEAD', ref: ref.ref });
 
   const inspected: Array<{ version: string; ref: string; info: Awaited<ReturnType<typeof inspectPackage>> }> =

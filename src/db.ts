@@ -78,7 +78,7 @@ const MIGRATIONS: string[] = [
   `,
 ];
 
-/** Ouvre la base (fichier ou `:memory:`) et applique les migrations manquantes. */
+/** Opens the database (file or `:memory:`) and applies the missing migrations. */
 export function openDb(file: string): Db {
   const db = new Database(file);
   db.pragma('journal_mode = WAL');
