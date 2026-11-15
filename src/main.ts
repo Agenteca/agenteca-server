@@ -19,17 +19,17 @@ async function main(): Promise<void> {
 
   if (!db.prepare("SELECT 1 FROM catalogs WHERE slug = 'default'").get()) {
     db.prepare(
-      "INSERT INTO catalogs (slug, name, description, visibility, created_at) VALUES ('default', 'Catalogue', 'Catalogue par défaut', 'public', ?)",
+      "INSERT INTO catalogs (slug, name, description, visibility, created_at) VALUES ('default', 'Catalog', 'Default catalog', 'public', ?)",
     ).run(new Date().toISOString());
   }
   const admin = bootstrapAdmin(db, process.env.AGENTECA_ADMIN_EMAIL, process.env.AGENTECA_ADMIN_PASSWORD);
   if (admin?.generatedPassword) {
     // Affiché une seule fois : seule l'empreinte du mot de passe est conservée.
     process.stdout.write(
-      `Premier démarrage — compte administrateur créé : ${admin.email}\nMot de passe (affiché une seule fois) : ${admin.generatedPassword}\n`,
+      `First start — administrator account created: ${admin.email}\nPassword (shown only once): ${admin.generatedPassword}\n`,
     );
   } else if (admin) {
-    process.stdout.write(`Premier démarrage — compte administrateur créé : ${admin.email}\n`);
+    process.stdout.write(`First start — administrator account created: ${admin.email}\n`);
   }
 
   const extensions = await loadExtensions();
@@ -45,7 +45,7 @@ async function main(): Promise<void> {
   const hostname = process.env.HOST ?? '0.0.0.0';
   const server = serve({ fetch: app.fetch, port, hostname }, () => {
     process.stdout.write(
-      `Agenteca Server (édition ${extensions.edition}) écoute sur http://${hostname}:${port}\n`,
+      `Agenteca Server (${extensions.edition} edition) listening on http://${hostname}:${port}\n`,
     );
   });
   const stop = (): void => {
@@ -59,6 +59,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((e: unknown) => {
-  process.stderr.write(`Démarrage impossible : ${e instanceof Error ? (e.stack ?? e.message) : String(e)}\n`);
+  process.stderr.write(`Cannot start: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}\n`);
   process.exit(1);
 });

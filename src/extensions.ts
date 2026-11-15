@@ -158,7 +158,7 @@ export async function loadExtensions(
     throw e;
   }
   if (typeof mod.register !== 'function') {
-    throw new Error(`le module ${moduleName} n'exporte pas de fonction register()`);
+    throw new Error(`module ${moduleName} does not export a register() function`);
   }
   return { ...base, ...(await mod.register(base)) };
 }

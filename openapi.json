@@ -3,7 +3,7 @@
   "info": {
     "title": "Agenteca Server",
     "version": "0.1.0",
-    "description": "Catalogue d’agents IA : recherche, contenu des paquets avant installation, publication, export en marketplaces natifs.",
+    "description": "Catalog of AI agents: search, package content before installation, publication, export to native marketplaces.",
     "license": {
       "name": "AGPL-3.0-only",
       "identifier": "AGPL-3.0-only"
@@ -19,7 +19,7 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Jeton de session (`POST /api/v1/auth/login`) ou jeton d’API (`POST /api/v1/tokens`)."
+        "description": "Session token (`POST /api/v1/auth/login`) or API token (`POST /api/v1/tokens`)."
       }
     },
     "schemas": {
@@ -164,11 +164,11 @@
           },
           "source": {
             "type": "string",
-            "description": "Référence installable par « ahub add » (forme OpenAPM), épinglée sur la dernière version quand elle est étiquetée."
+            "description": "Reference that \"ahub add\" can install (OpenAPM form), pinned to the latest version when it is tagged."
           },
           "repository": {
             "type": "string",
-            "description": "Référence du dépôt, sans version."
+            "description": "Reference of the repository, without a version."
           },
           "description": {
             "type": [
@@ -181,7 +181,7 @@
               "string",
               "null"
             ],
-            "description": "Identifiant SPDX déclaré par le paquet."
+            "description": "SPDX identifier declared by the package."
           },
           "tools": {
             "type": "array",
@@ -197,7 +197,7 @@
           },
           "nativePlugin": {
             "type": "boolean",
-            "description": "Le dépôt a aussi la disposition d’un plugin natif."
+            "description": "The repository also has the layout of a native plugin."
           },
           "latestVersion": {
             "type": [
@@ -500,12 +500,12 @@
     "/healthz": {
       "get": {
         "tags": [
-          "Divers"
+          "Misc"
         ],
-        "summary": "État du serveur",
+        "summary": "Server status",
         "responses": {
           "200": {
-            "description": "Le serveur répond",
+            "description": "The server responds",
             "content": {
               "application/json": {
                 "schema": {
@@ -539,9 +539,9 @@
     "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Ouvre une session",
+        "summary": "Opens a session",
         "requestBody": {
           "required": true,
           "content": {
@@ -568,7 +568,7 @@
         },
         "responses": {
           "200": {
-            "description": "Session ouverte",
+            "description": "Session opened",
             "content": {
               "application/json": {
                 "schema": {
@@ -597,7 +597,7 @@
             }
           },
           "400": {
-            "description": "Requête invalide",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -607,7 +607,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -622,9 +622,9 @@
     "/api/v1/auth/logout": {
       "post": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Ferme la session courante",
+        "summary": "Closes the current session",
         "security": [
           {
             "bearerAuth": []
@@ -632,7 +632,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Session fermée",
+            "description": "Session closed",
             "content": {
               "application/json": {
                 "schema": {
@@ -653,7 +653,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -668,9 +668,9 @@
     "/api/v1/me": {
       "get": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Utilisateur courant",
+        "summary": "Current user",
         "security": [
           {
             "bearerAuth": []
@@ -678,7 +678,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Utilisateur",
+            "description": "User",
             "content": {
               "application/json": {
                 "schema": {
@@ -688,7 +688,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -703,9 +703,9 @@
     "/api/v1/tokens": {
       "get": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Jetons de l’utilisateur courant",
+        "summary": "Tokens of the current user",
         "security": [
           {
             "bearerAuth": []
@@ -713,7 +713,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Jetons",
+            "description": "Tokens",
             "content": {
               "application/json": {
                 "schema": {
@@ -734,7 +734,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -747,10 +747,10 @@
       },
       "post": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Crée un jeton d’API",
-        "description": "Le jeton n’est retourné qu’une fois : seule son empreinte est conservée.",
+        "summary": "Creates an API token",
+        "description": "The token is returned only once: only its hash is kept.",
         "security": [
           {
             "bearerAuth": []
@@ -778,7 +778,7 @@
         },
         "responses": {
           "201": {
-            "description": "Jeton créé",
+            "description": "Token created",
             "content": {
               "application/json": {
                 "schema": {
@@ -800,7 +800,7 @@
             }
           },
           "400": {
-            "description": "Requête invalide",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -810,7 +810,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -825,9 +825,9 @@
     "/api/v1/tokens/{id}": {
       "delete": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Révoque un jeton",
+        "summary": "Revokes a token",
         "security": [
           {
             "bearerAuth": []
@@ -847,7 +847,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Jeton révoqué",
+            "description": "Token revoked",
             "content": {
               "application/json": {
                 "schema": {
@@ -868,7 +868,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -878,7 +878,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -893,9 +893,9 @@
     "/api/v1/users": {
       "get": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Liste les utilisateurs (admin)",
+        "summary": "Lists the users (admin)",
         "security": [
           {
             "bearerAuth": []
@@ -903,7 +903,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Utilisateurs",
+            "description": "Users",
             "content": {
               "application/json": {
                 "schema": {
@@ -924,7 +924,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -934,7 +934,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -947,9 +947,9 @@
       },
       "post": {
         "tags": [
-          "Comptes"
+          "Accounts"
         ],
-        "summary": "Crée un utilisateur (admin)",
+        "summary": "Creates a user (admin)",
         "security": [
           {
             "bearerAuth": []
@@ -985,7 +985,7 @@
         },
         "responses": {
           "201": {
-            "description": "Utilisateur créé",
+            "description": "User created",
             "content": {
               "application/json": {
                 "schema": {
@@ -995,7 +995,7 @@
             }
           },
           "400": {
-            "description": "Requête invalide",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -1005,7 +1005,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -1015,7 +1015,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -1025,7 +1025,7 @@
             }
           },
           "409": {
-            "description": "Conflit",
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -1040,12 +1040,12 @@
     "/api/v1/catalogs": {
       "get": {
         "tags": [
-          "Catalogues"
+          "Catalogs"
         ],
-        "summary": "Liste les catalogues visibles",
+        "summary": "Lists the visible catalogs",
         "responses": {
           "200": {
-            "description": "Catalogues",
+            "description": "Catalogs",
             "content": {
               "application/json": {
                 "schema": {
@@ -1069,9 +1069,9 @@
       },
       "post": {
         "tags": [
-          "Catalogues"
+          "Catalogs"
         ],
-        "summary": "Crée un catalogue (admin)",
+        "summary": "Creates a catalog (admin)",
         "security": [
           {
             "bearerAuth": []
@@ -1116,7 +1116,7 @@
         },
         "responses": {
           "201": {
-            "description": "Catalogue créé",
+            "description": "Catalog created",
             "content": {
               "application/json": {
                 "schema": {
@@ -1126,7 +1126,7 @@
             }
           },
           "400": {
-            "description": "Requête invalide",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -1136,7 +1136,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -1146,7 +1146,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -1156,7 +1156,7 @@
             }
           },
           "409": {
-            "description": "Conflit",
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -1171,9 +1171,9 @@
     "/api/v1/catalogs/{slug}": {
       "get": {
         "tags": [
-          "Catalogues"
+          "Catalogs"
         ],
-        "summary": "Détail d’un catalogue",
+        "summary": "Details of a catalog",
         "parameters": [
           {
             "schema": {
@@ -1188,7 +1188,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Catalogue",
+            "description": "Catalog",
             "content": {
               "application/json": {
                 "schema": {
@@ -1198,7 +1198,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1213,9 +1213,9 @@
     "/api/v1/catalogs/{slug}/members/{userId}": {
       "put": {
         "tags": [
-          "Catalogues"
+          "Catalogs"
         ],
-        "summary": "Donne à un utilisateur un rôle dans un catalogue",
+        "summary": "Gives a user a role in a catalog",
         "security": [
           {
             "bearerAuth": []
@@ -1262,7 +1262,7 @@
         },
         "responses": {
           "200": {
-            "description": "Rôle attribué",
+            "description": "Role assigned",
             "content": {
               "application/json": {
                 "schema": {
@@ -1288,7 +1288,7 @@
             }
           },
           "400": {
-            "description": "Requête invalide",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -1298,7 +1298,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -1308,7 +1308,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -1318,7 +1318,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1331,9 +1331,9 @@
       },
       "delete": {
         "tags": [
-          "Catalogues"
+          "Catalogs"
         ],
-        "summary": "Retire un membre d’un catalogue",
+        "summary": "Removes a member from a catalog",
         "security": [
           {
             "bearerAuth": []
@@ -1362,7 +1362,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Membre retiré",
+            "description": "Member removed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1383,7 +1383,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -1393,7 +1393,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -1403,7 +1403,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1418,10 +1418,10 @@
     "/api/v1/catalogs/{slug}/export/{format}": {
       "get": {
         "tags": [
-          "Catalogues"
+          "Catalogs"
         ],
-        "summary": "Exporte le catalogue au format de marketplace natif d’un outil",
-        "description": "Produit le contenu de `.claude-plugin/marketplace.json` (Claude Code), `.agents/plugins/marketplace.json` (Codex), `.github/plugin/marketplace.json` (Copilot CLI) ou `.cursor-plugin/marketplace.json` (Cursor). Par défaut, seuls les paquets qui sont aussi des plugins natifs sont exportés.",
+        "summary": "Exports the catalog in the native marketplace format of a tool",
+        "description": "Produces the content of `.claude-plugin/marketplace.json` (Claude Code), `.agents/plugins/marketplace.json` (Codex), `.github/plugin/marketplace.json` (Copilot CLI) or `.cursor-plugin/marketplace.json` (Cursor). By default, only the packages that are also native plugins are exported.",
         "parameters": [
           {
             "schema": {
@@ -1448,7 +1448,7 @@
                 "true",
                 "false"
               ],
-              "description": "Inclut aussi les paquets qui ne sont pas des plugins natifs."
+              "description": "Also includes the packages that are not native plugins."
             },
             "required": false,
             "name": "all",
@@ -1457,7 +1457,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Marketplace exporté",
+            "description": "Marketplace exported",
             "content": {
               "application/json": {
                 "schema": {
@@ -1487,7 +1487,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1502,15 +1502,15 @@
     "/api/v1/packages": {
       "get": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Liste et recherche les paquets",
+        "summary": "Lists and searches the packages",
         "parameters": [
           {
             "schema": {
               "type": "string",
               "maxLength": 200,
-              "description": "Mots cherchés dans le nom, la description et les étiquettes."
+              "description": "Words looked for in the name, the description and the tags."
             },
             "required": false,
             "name": "q",
@@ -1523,7 +1523,7 @@
                   "$ref": "#/components/schemas/Tool"
                 },
                 {
-                  "description": "Ne garde que les paquets compatibles avec cet outil."
+                  "description": "Keeps only the packages compatible with this tool."
                 }
               ]
             },
@@ -1563,7 +1563,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Paquets",
+            "description": "Packages",
             "content": {
               "application/json": {
                 "schema": {
@@ -1596,7 +1596,7 @@
             }
           },
           "400": {
-            "description": "Requête invalide",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -1609,10 +1609,10 @@
       },
       "post": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Ajoute un dépôt au catalogue (éditeur)",
-        "description": "Lit les tags et les manifestes du dépôt, indexe les versions et leur contenu, et scanne chaque version. Aucun code du dépôt n’est exécuté.",
+        "summary": "Adds a repository to the catalog (editor)",
+        "description": "Reads the tags and the manifests of the repository, indexes the versions and their content, and scans each version. No code from the repository is executed.",
         "security": [
           {
             "bearerAuth": []
@@ -1628,7 +1628,7 @@
                   "source": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Référence OpenAPM du dépôt : `propriétaire/dépôt`, `hôte/propriétaire/dépôt/sous-dossier` ou URL git.",
+                    "description": "OpenAPM reference of the repository: `owner/repo`, `host/owner/repo/subfolder` or a git URL.",
                     "example": "agenteca/agenteca-registry/examples/hello-agent"
                   },
                   "catalog": {
@@ -1657,7 +1657,7 @@
         },
         "responses": {
           "201": {
-            "description": "Paquet indexé",
+            "description": "Package indexed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1701,7 +1701,7 @@
             }
           },
           "400": {
-            "description": "Requête invalide",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -1711,7 +1711,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -1721,7 +1721,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -1731,7 +1731,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1741,7 +1741,7 @@
             }
           },
           "409": {
-            "description": "Conflit",
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -1751,7 +1751,7 @@
             }
           },
           "422": {
-            "description": "Contenu non traitable",
+            "description": "Unprocessable content",
             "content": {
               "application/json": {
                 "schema": {
@@ -1766,9 +1766,9 @@
     "/api/v1/packages/{id}": {
       "get": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Détail d’un paquet",
+        "summary": "Details of a package",
         "parameters": [
           {
             "schema": {
@@ -1783,7 +1783,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Paquet",
+            "description": "Package",
             "content": {
               "application/json": {
                 "schema": {
@@ -1793,7 +1793,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1806,9 +1806,9 @@
       },
       "delete": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Retire un paquet du catalogue (admin)",
+        "summary": "Removes a package from the catalog (admin)",
         "security": [
           {
             "bearerAuth": []
@@ -1828,7 +1828,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Paquet retiré",
+            "description": "Package removed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1849,7 +1849,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -1859,7 +1859,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -1869,7 +1869,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1884,9 +1884,9 @@
     "/api/v1/packages/{id}/refresh": {
       "post": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Relit le dépôt d’un paquet (éditeur)",
+        "summary": "Reads the repository of a package again (editor)",
         "security": [
           {
             "bearerAuth": []
@@ -1906,7 +1906,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Paquet réindexé",
+            "description": "Package reindexed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1931,7 +1931,7 @@
             }
           },
           "401": {
-            "description": "Authentification requise",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -1941,7 +1941,7 @@
             }
           },
           "403": {
-            "description": "Droits insuffisants",
+            "description": "Insufficient rights",
             "content": {
               "application/json": {
                 "schema": {
@@ -1951,7 +1951,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1961,7 +1961,7 @@
             }
           },
           "422": {
-            "description": "Contenu non traitable",
+            "description": "Unprocessable content",
             "content": {
               "application/json": {
                 "schema": {
@@ -1976,9 +1976,9 @@
     "/api/v1/packages/{id}/versions": {
       "get": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Versions indexées d’un paquet",
+        "summary": "Indexed versions of a package",
         "parameters": [
           {
             "schema": {
@@ -2014,7 +2014,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2029,9 +2029,9 @@
     "/api/v1/packages/{id}/versions/{version}": {
       "get": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Contenu d’une version : primitives, fichiers, constats du scan",
+        "summary": "Content of a version: primitives, files, scan findings",
         "parameters": [
           {
             "schema": {
@@ -2066,7 +2066,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2081,9 +2081,9 @@
     "/api/v1/packages/{id}/versions/{version}/file": {
       "get": {
         "tags": [
-          "Paquets"
+          "Packages"
         ],
-        "summary": "Texte d’un fichier, pour le lire avant d’installer",
+        "summary": "Text of a file, to read it before installing",
         "parameters": [
           {
             "schema": {
@@ -2109,7 +2109,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Chemin du fichier dans le paquet.",
+              "description": "Path of the file in the package.",
               "example": ".apm/skills/hello/SKILL.md"
             },
             "required": true,
@@ -2119,7 +2119,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Fichier",
+            "description": "File",
             "content": {
               "application/json": {
                 "schema": {
@@ -2129,7 +2129,7 @@
             }
           },
           "404": {
-            "description": "Introuvable",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {

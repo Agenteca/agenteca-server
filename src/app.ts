@@ -53,18 +53,18 @@ const PackageSchema = z
     id: z.number().int(),
     catalog: z.string(),
     name: z.string(),
-    source: z
-      .string()
-      .openapi({
-        description:
-          'Référence installable par « ahub add » (forme OpenAPM), épinglée sur la dernière version quand elle est étiquetée.',
-      }),
-    repository: z.string().openapi({ description: 'Référence du dépôt, sans version.' }),
+    source: z.string().openapi({
+      description:
+        'Reference that "ahub add" can install (OpenAPM form), pinned to the latest version when it is tagged.',
+    }),
+    repository: z.string().openapi({ description: 'Reference of the repository, without a version.' }),
     description: z.string().nullable(),
-    license: z.string().nullable().openapi({ description: 'Identifiant SPDX déclaré par le paquet.' }),
+    license: z.string().nullable().openapi({ description: 'SPDX identifier declared by the package.' }),
     tools: z.array(ToolSchema),
     tags: z.array(z.string()),
-    nativePlugin: z.boolean().openapi({ description: 'Le dépôt a aussi la disposition d’un plugin natif.' }),
+    nativePlugin: z
+      .boolean()
+      .openapi({ description: 'The repository also has the layout of a native plugin.' }),
     latestVersion: z.string().nullable(),
     status: z.enum(['published', 'pending']),
     installCommand: z.string(),
@@ -135,12 +135,12 @@ const json = <T extends z.ZodTypeAny>(schema: T, description: string) => ({
   description,
 });
 const errors = {
-  400: json(ErrorSchema, 'Requête invalide'),
-  401: json(ErrorSchema, 'Authentification requise'),
-  403: json(ErrorSchema, 'Droits insuffisants'),
-  404: json(ErrorSchema, 'Introuvable'),
-  409: json(ErrorSchema, 'Conflit'),
-  422: json(ErrorSchema, 'Contenu non traitable'),
+  400: json(ErrorSchema, 'Invalid request'),
+  401: json(ErrorSchema, 'Authentication required'),
+  403: json(ErrorSchema, 'Insufficient rights'),
+  404: json(ErrorSchema, 'Not found'),
+  409: json(ErrorSchema, 'Conflict'),
+  422: json(ErrorSchema, 'Unprocessable content'),
 };
 const security = [{ bearerAuth: [] }];
 const IdParam = z.object({
@@ -171,7 +171,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
           {
             error: {
               code: 'VALIDATION',
-              message: `${issue?.path.join('.') || 'requête'} : ${issue?.message ?? 'invalide'}`,
+              message: `${issue?.path.join('.') || 'request'}: ${issue?.message ?? 'invalid'}`,
             },
           },
           400,
@@ -187,9 +187,9 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     if (err instanceof IndexError)
       return c.json({ error: { code: err.code, message: err.message } }, err.status as 409 | 422);
     process.stderr.write(`${err.stack ?? err.message}\n`);
-    return c.json({ error: { code: 'INTERNAL', message: 'erreur interne' } }, 500);
+    return c.json({ error: { code: 'INTERNAL', message: 'internal error' } }, 500);
   });
-  app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'route inconnue' } }, 404));
+  app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'unknown route' } }, 404));
 
   // Authentification : fournisseurs premium d'abord, puis jeton porteur local.
   app.use('*', async (c, next) => {
@@ -201,7 +201,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     if (user === undefined) {
       const token = bearerToken(c.req.raw);
       user = token ? userFromToken(db, token) : null;
-      if (token && !user) throw new HttpError(401, 'TOKEN_INVALID', 'jeton invalide ou expiré');
+      if (token && !user) throw new HttpError(401, 'TOKEN_INVALID', 'invalid or expired token');
     }
     c.set('user', user);
     await next();
@@ -242,8 +242,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
   const require = (c: Context<Env>, action: Action, catalog?: CatalogRow): void => {
     if (allowed(c, action, catalog)) return;
     audit(c, action, 'denied', catalog?.slug);
-    if (!c.get('user')) throw new HttpError(401, 'UNAUTHENTICATED', 'authentification requise');
-    throw new HttpError(403, 'FORBIDDEN', 'droits insuffisants pour cette action');
+    if (!c.get('user')) throw new HttpError(401, 'UNAUTHENTICATED', 'authentication required');
+    throw new HttpError(403, 'FORBIDDEN', 'insufficient rights for this action');
   };
   const catalogBySlug = (slug: string): CatalogRow | undefined =>
     db.prepare('SELECT * FROM catalogs WHERE slug = ?').get(slug) as CatalogRow | undefined;
@@ -253,7 +253,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
   const readableCatalog = (c: Context<Env>, slug: string): CatalogRow => {
     const catalog = catalogBySlug(slug);
     if (!catalog || !allowed(c, 'catalog.read', catalog))
-      throw new HttpError(404, 'NOT_FOUND', `catalogue « ${slug} » introuvable`);
+      throw new HttpError(404, 'NOT_FOUND', `catalog "${slug}" not found`);
     return catalog;
   };
   const readablePackage = (c: Context<Env>, id: number): { pkg: PackageRow; catalog: CatalogRow } => {
@@ -306,7 +306,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
   });
   const currentUser = (c: Context<Env>): User => {
     const user = c.get('user');
-    if (!user) throw new HttpError(401, 'UNAUTHENTICATED', 'authentification requise');
+    if (!user) throw new HttpError(401, 'UNAUTHENTICATED', 'authentication required');
     return user;
   };
 
@@ -316,12 +316,12 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/healthz',
-      tags: ['Divers'],
-      summary: 'État du serveur',
+      tags: ['Misc'],
+      summary: 'Server status',
       responses: {
         200: json(
           z.object({ status: z.literal('ok'), version: z.string(), edition: z.string() }),
-          'Le serveur répond',
+          'The server responds',
         ),
       },
     }),
@@ -334,8 +334,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'post',
       path: '/api/v1/auth/login',
-      tags: ['Comptes'],
-      summary: 'Ouvre une session',
+      tags: ['Accounts'],
+      summary: 'Opens a session',
       request: {
         body: {
           required: true,
@@ -349,7 +349,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       responses: {
         200: json(
           z.object({ token: z.string(), expiresAt: z.string().nullable(), user: UserSchema }),
-          'Session ouverte',
+          'Session opened',
         ),
         400: errors[400],
         401: errors[401],
@@ -366,7 +366,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
           action: 'auth.login',
           outcome: 'failure',
         });
-        throw new HttpError(401, 'CREDENTIALS_INVALID', 'adresse ou mot de passe incorrect');
+        throw new HttpError(401, 'CREDENTIALS_INVALID', 'incorrect address or password');
       }
       const t = issueToken(db, row.id, 'session', 'session');
       void ext.auditSink.record({
@@ -386,10 +386,10 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'post',
       path: '/api/v1/auth/logout',
-      tags: ['Comptes'],
-      summary: 'Ferme la session courante',
+      tags: ['Accounts'],
+      summary: 'Closes the current session',
       security,
-      responses: { 200: json(z.object({ ok: z.literal(true) }), 'Session fermée'), 401: errors[401] },
+      responses: { 200: json(z.object({ ok: z.literal(true) }), 'Session closed'), 401: errors[401] },
     }),
     (c) => {
       currentUser(c);
@@ -403,10 +403,10 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/me',
-      tags: ['Comptes'],
-      summary: 'Utilisateur courant',
+      tags: ['Accounts'],
+      summary: 'Current user',
       security,
-      responses: { 200: json(UserSchema, 'Utilisateur'), 401: errors[401] },
+      responses: { 200: json(UserSchema, 'User'), 401: errors[401] },
     }),
     (c) => c.json(currentUser(c), 200),
   );
@@ -415,10 +415,10 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/tokens',
-      tags: ['Comptes'],
-      summary: 'Jetons de l’utilisateur courant',
+      tags: ['Accounts'],
+      summary: 'Tokens of the current user',
       security,
-      responses: { 200: json(z.object({ items: z.array(TokenSchema) }), 'Jetons'), 401: errors[401] },
+      responses: { 200: json(z.object({ items: z.array(TokenSchema) }), 'Tokens'), 401: errors[401] },
     }),
     (c) => {
       const rows = db
@@ -449,9 +449,9 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'post',
       path: '/api/v1/tokens',
-      tags: ['Comptes'],
-      summary: 'Crée un jeton d’API',
-      description: 'Le jeton n’est retourné qu’une fois : seule son empreinte est conservée.',
+      tags: ['Accounts'],
+      summary: 'Creates an API token',
+      description: 'The token is returned only once: only its hash is kept.',
       security,
       request: {
         body: {
@@ -460,7 +460,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
         },
       },
       responses: {
-        201: json(z.object({ id: z.number().int(), token: z.string() }), 'Jeton créé'),
+        201: json(z.object({ id: z.number().int(), token: z.string() }), 'Token created'),
         400: errors[400],
         401: errors[401],
       },
@@ -477,12 +477,12 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'delete',
       path: '/api/v1/tokens/{id}',
-      tags: ['Comptes'],
-      summary: 'Révoque un jeton',
+      tags: ['Accounts'],
+      summary: 'Revokes a token',
       security,
       request: { params: IdParam },
       responses: {
-        200: json(z.object({ ok: z.literal(true) }), 'Jeton révoqué'),
+        200: json(z.object({ ok: z.literal(true) }), 'Token revoked'),
         401: errors[401],
         404: errors[404],
       },
@@ -491,7 +491,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       const info = db
         .prepare('DELETE FROM tokens WHERE id = ? AND user_id = ?')
         .run(c.req.valid('param').id, currentUser(c).id);
-      if (info.changes === 0) throw new HttpError(404, 'NOT_FOUND', 'jeton introuvable');
+      if (info.changes === 0) throw new HttpError(404, 'NOT_FOUND', 'token not found');
       return c.json({ ok: true as const }, 200);
     },
   );
@@ -500,11 +500,11 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/users',
-      tags: ['Comptes'],
-      summary: 'Liste les utilisateurs (admin)',
+      tags: ['Accounts'],
+      summary: 'Lists the users (admin)',
       security,
       responses: {
-        200: json(z.object({ items: z.array(UserSchema) }), 'Utilisateurs'),
+        200: json(z.object({ items: z.array(UserSchema) }), 'Users'),
         401: errors[401],
         403: errors[403],
       },
@@ -522,8 +522,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'post',
       path: '/api/v1/users',
-      tags: ['Comptes'],
-      summary: 'Crée un utilisateur (admin)',
+      tags: ['Accounts'],
+      summary: 'Creates a user (admin)',
       security,
       request: {
         body: {
@@ -536,7 +536,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
         },
       },
       responses: {
-        201: json(UserSchema, 'Utilisateur créé'),
+        201: json(UserSchema, 'User created'),
         400: errors[400],
         401: errors[401],
         403: errors[403],
@@ -547,7 +547,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       require(c, 'user.manage');
       const body = c.req.valid('json');
       if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(body.email.trim()))
-        throw new HttpError(409, 'EMAIL_TAKEN', 'un compte existe déjà pour cette adresse');
+        throw new HttpError(409, 'EMAIL_TAKEN', 'an account already exists for this address');
       const user = createUser(db, body.email, body.password, body.role);
       audit(c, 'user.create', 'success', user.email, { role: user.role });
       return c.json(user, 201);
@@ -560,9 +560,9 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/catalogs',
-      tags: ['Catalogues'],
-      summary: 'Liste les catalogues visibles',
-      responses: { 200: json(z.object({ items: z.array(CatalogSchema) }), 'Catalogues') },
+      tags: ['Catalogs'],
+      summary: 'Lists the visible catalogs',
+      responses: { 200: json(z.object({ items: z.array(CatalogSchema) }), 'Catalogs') },
     }),
     (c) => {
       const rows = (db.prepare('SELECT * FROM catalogs ORDER BY slug').all() as CatalogRow[]).filter((r) =>
@@ -576,8 +576,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'post',
       path: '/api/v1/catalogs',
-      tags: ['Catalogues'],
-      summary: 'Crée un catalogue (admin)',
+      tags: ['Catalogs'],
+      summary: 'Creates a catalog (admin)',
       security,
       request: {
         body: {
@@ -595,7 +595,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
         },
       },
       responses: {
-        201: json(CatalogSchema, 'Catalogue créé'),
+        201: json(CatalogSchema, 'Catalog created'),
         400: errors[400],
         401: errors[401],
         403: errors[403],
@@ -606,7 +606,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       require(c, 'catalog.create');
       const body = c.req.valid('json');
       if (catalogBySlug(body.slug))
-        throw new HttpError(409, 'SLUG_TAKEN', `le catalogue « ${body.slug} » existe déjà`);
+        throw new HttpError(409, 'SLUG_TAKEN', `catalog "${body.slug}" already exists`);
       db.prepare(
         'INSERT INTO catalogs (slug, name, description, visibility, created_at) VALUES (?, ?, ?, ?, ?)',
       ).run(body.slug, body.name, body.description ?? null, body.visibility, new Date().toISOString());
@@ -619,10 +619,10 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/catalogs/{slug}',
-      tags: ['Catalogues'],
-      summary: 'Détail d’un catalogue',
+      tags: ['Catalogs'],
+      summary: 'Details of a catalog',
       request: { params: SlugParam },
-      responses: { 200: json(CatalogSchema, 'Catalogue'), 404: errors[404] },
+      responses: { 200: json(CatalogSchema, 'Catalog'), 404: errors[404] },
     }),
     (c) => c.json(catalogDto(readableCatalog(c, c.req.valid('param').slug)), 200),
   );
@@ -631,8 +631,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'put',
       path: '/api/v1/catalogs/{slug}/members/{userId}',
-      tags: ['Catalogues'],
-      summary: 'Donne à un utilisateur un rôle dans un catalogue',
+      tags: ['Catalogs'],
+      summary: 'Gives a user a role in a catalog',
       security,
       request: {
         params: SlugParam.extend({
@@ -647,7 +647,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       responses: {
         200: json(
           z.object({ catalog: z.string(), userId: z.number().int(), role: RoleSchema }),
-          'Rôle attribué',
+          'Role assigned',
         ),
         400: errors[400],
         401: errors[401],
@@ -660,7 +660,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       const catalog = readableCatalog(c, slug);
       require(c, 'catalog.manage', catalog);
       if (!db.prepare('SELECT 1 FROM users WHERE id = ?').get(userId))
-        throw new HttpError(404, 'NOT_FOUND', 'utilisateur introuvable');
+        throw new HttpError(404, 'NOT_FOUND', 'user not found');
       const { role } = c.req.valid('json');
       db.prepare(
         'INSERT INTO catalog_members (catalog_id, user_id, role) VALUES (?, ?, ?) ON CONFLICT (catalog_id, user_id) DO UPDATE SET role = excluded.role',
@@ -674,8 +674,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'delete',
       path: '/api/v1/catalogs/{slug}/members/{userId}',
-      tags: ['Catalogues'],
-      summary: 'Retire un membre d’un catalogue',
+      tags: ['Catalogs'],
+      summary: 'Removes a member from a catalog',
       security,
       request: {
         params: SlugParam.extend({
@@ -687,7 +687,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
         }),
       },
       responses: {
-        200: json(z.object({ ok: z.literal(true) }), 'Membre retiré'),
+        200: json(z.object({ ok: z.literal(true) }), 'Member removed'),
         401: errors[401],
         403: errors[403],
         404: errors[404],
@@ -707,23 +707,23 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/catalogs/{slug}/export/{format}',
-      tags: ['Catalogues'],
-      summary: 'Exporte le catalogue au format de marketplace natif d’un outil',
+      tags: ['Catalogs'],
+      summary: 'Exports the catalog in the native marketplace format of a tool',
       description:
-        'Produit le contenu de `.claude-plugin/marketplace.json` (Claude Code), `.agents/plugins/marketplace.json` (Codex), `.github/plugin/marketplace.json` (Copilot CLI) ou `.cursor-plugin/marketplace.json` (Cursor). Par défaut, seuls les paquets qui sont aussi des plugins natifs sont exportés.',
+        'Produces the content of `.claude-plugin/marketplace.json` (Claude Code), `.agents/plugins/marketplace.json` (Codex), `.github/plugin/marketplace.json` (Copilot CLI) or `.cursor-plugin/marketplace.json` (Cursor). By default, only the packages that are also native plugins are exported.',
       request: {
         params: SlugParam.extend({ format: ToolSchema.openapi({ param: { name: 'format', in: 'path' } }) }),
         query: z.object({
           all: z
             .enum(['true', 'false'])
             .optional()
-            .openapi({ description: 'Inclut aussi les paquets qui ne sont pas des plugins natifs.' }),
+            .openapi({ description: 'Also includes the packages that are not native plugins.' }),
         }),
       },
       responses: {
         200: json(
           z.object({ path: z.string(), marketplace: z.record(z.unknown()), skipped: z.array(z.string()) }),
-          'Marketplace exporté',
+          'Marketplace exported',
         ),
         404: errors[404],
       },
@@ -764,17 +764,17 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/packages',
-      tags: ['Paquets'],
-      summary: 'Liste et recherche les paquets',
+      tags: ['Packages'],
+      summary: 'Lists and searches the packages',
       request: {
         query: z.object({
           q: z
             .string()
             .max(200)
             .optional()
-            .openapi({ description: 'Mots cherchés dans le nom, la description et les étiquettes.' }),
+            .openapi({ description: 'Words looked for in the name, the description and the tags.' }),
           tool: ToolSchema.optional().openapi({
-            description: 'Ne garde que les paquets compatibles avec cet outil.',
+            description: 'Keeps only the packages compatible with this tool.',
           }),
           catalog: z.string().optional(),
           page: z.coerce.number().int().min(1).default(1),
@@ -789,7 +789,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
             page: z.number().int(),
             pageSize: z.number().int(),
           }),
-          'Paquets',
+          'Packages',
         ),
         400: errors[400],
       },
@@ -823,10 +823,10 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'post',
       path: '/api/v1/packages',
-      tags: ['Paquets'],
-      summary: 'Ajoute un dépôt au catalogue (éditeur)',
+      tags: ['Packages'],
+      summary: 'Adds a repository to the catalog (editor)',
       description:
-        'Lit les tags et les manifestes du dépôt, indexe les versions et leur contenu, et scanne chaque version. Aucun code du dépôt n’est exécuté.',
+        'Reads the tags and the manifests of the repository, indexes the versions and their content, and scans each version. No code from the repository is executed.',
       security,
       request: {
         body: {
@@ -834,14 +834,11 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
           content: {
             'application/json': {
               schema: z.object({
-                source: z
-                  .string()
-                  .min(1)
-                  .openapi({
-                    description:
-                      'Référence OpenAPM du dépôt : `propriétaire/dépôt`, `hôte/propriétaire/dépôt/sous-dossier` ou URL git.',
-                    example: 'agenteca/agenteca-registry/examples/hello-agent',
-                  }),
+                source: z.string().min(1).openapi({
+                  description:
+                    'OpenAPM reference of the repository: `owner/repo`, `host/owner/repo/subfolder` or a git URL.',
+                  example: 'agenteca/agenteca-registry/examples/hello-agent',
+                }),
                 catalog: z.string().default('default'),
                 name: z
                   .string()
@@ -860,7 +857,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
             versions: z.array(z.string()),
             skipped: z.array(z.object({ ref: z.string(), reason: z.string() })),
           }),
-          'Paquet indexé',
+          'Package indexed',
         ),
         400: errors[400],
         401: errors[401],
@@ -892,7 +889,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       if (review.decision === 'reject') {
         db.prepare('DELETE FROM packages WHERE id = ?').run(result.packageId);
         audit(c, 'package.publish', 'denied', result.name, { reason: review.reason });
-        throw new HttpError(422, 'PUBLICATION_REJECTED', review.reason ?? 'publication refusée');
+        throw new HttpError(422, 'PUBLICATION_REJECTED', review.reason ?? 'publication refused');
       }
       db.prepare('UPDATE packages SET status = ? WHERE id = ?').run(
         review.decision === 'pending' ? 'pending' : 'published',
@@ -915,10 +912,10 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/packages/{id}',
-      tags: ['Paquets'],
-      summary: 'Détail d’un paquet',
+      tags: ['Packages'],
+      summary: 'Details of a package',
       request: { params: IdParam },
-      responses: { 200: json(PackageSchema, 'Paquet'), 404: errors[404] },
+      responses: { 200: json(PackageSchema, 'Package'), 404: errors[404] },
     }),
     (c) => {
       const { pkg, catalog } = readablePackage(c, c.req.valid('param').id);
@@ -930,12 +927,12 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'post',
       path: '/api/v1/packages/{id}/refresh',
-      tags: ['Paquets'],
-      summary: 'Relit le dépôt d’un paquet (éditeur)',
+      tags: ['Packages'],
+      summary: 'Reads the repository of a package again (editor)',
       security,
       request: { params: IdParam },
       responses: {
-        200: json(z.object({ package: PackageSchema, versions: z.array(z.string()) }), 'Paquet réindexé'),
+        200: json(z.object({ package: PackageSchema, versions: z.array(z.string()) }), 'Package reindexed'),
         401: errors[401],
         403: errors[403],
         404: errors[404],
@@ -964,12 +961,12 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'delete',
       path: '/api/v1/packages/{id}',
-      tags: ['Paquets'],
-      summary: 'Retire un paquet du catalogue (admin)',
+      tags: ['Packages'],
+      summary: 'Removes a package from the catalog (admin)',
       security,
       request: { params: IdParam },
       responses: {
-        200: json(z.object({ ok: z.literal(true) }), 'Paquet retiré'),
+        200: json(z.object({ ok: z.literal(true) }), 'Package removed'),
         401: errors[401],
         403: errors[403],
         404: errors[404],
@@ -988,8 +985,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/packages/{id}/versions',
-      tags: ['Paquets'],
-      summary: 'Versions indexées d’un paquet',
+      tags: ['Packages'],
+      summary: 'Indexed versions of a package',
       request: { params: IdParam },
       responses: { 200: json(z.object({ items: z.array(VersionSchema) }), 'Versions'), 404: errors[404] },
     }),
@@ -1012,7 +1009,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     const row = db
       .prepare('SELECT * FROM package_versions WHERE package_id = ? AND (version = ? OR ref = ?)')
       .get(packageId, version, version) as VersionRow | undefined;
-    if (!row) throw new HttpError(404, 'NOT_FOUND', `version « ${version} » introuvable`);
+    if (!row) throw new HttpError(404, 'NOT_FOUND', `version "${version}" not found`);
     return row;
   };
 
@@ -1020,8 +1017,8 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/packages/{id}/versions/{version}',
-      tags: ['Paquets'],
-      summary: 'Contenu d’une version : primitives, fichiers, constats du scan',
+      tags: ['Packages'],
+      summary: 'Content of a version: primitives, files, scan findings',
       request: { params: VersionParam },
       responses: { 200: json(VersionDetailSchema, 'Version'), 404: errors[404] },
     }),
@@ -1061,21 +1058,18 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
     createRoute({
       method: 'get',
       path: '/api/v1/packages/{id}/versions/{version}/file',
-      tags: ['Paquets'],
-      summary: 'Texte d’un fichier, pour le lire avant d’installer',
+      tags: ['Packages'],
+      summary: 'Text of a file, to read it before installing',
       request: {
         params: VersionParam,
         query: z.object({
-          path: z
-            .string()
-            .min(1)
-            .openapi({
-              description: 'Chemin du fichier dans le paquet.',
-              example: '.apm/skills/hello/SKILL.md',
-            }),
+          path: z.string().min(1).openapi({
+            description: 'Path of the file in the package.',
+            example: '.apm/skills/hello/SKILL.md',
+          }),
         }),
       },
-      responses: { 200: json(FileSchema, 'Fichier'), 404: errors[404] },
+      responses: { 200: json(FileSchema, 'File'), 404: errors[404] },
     }),
     (c) => {
       const { id, version } = c.req.valid('param');
@@ -1084,7 +1078,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
       const f = db
         .prepare('SELECT * FROM package_files WHERE version_id = ? AND path = ?')
         .get(v.id, c.req.valid('query').path) as FileRow | undefined;
-      if (!f) throw new HttpError(404, 'NOT_FOUND', 'fichier introuvable dans cette version');
+      if (!f) throw new HttpError(404, 'NOT_FOUND', 'file not found in this version');
       return c.json({ path: f.path, size: f.size, sha256: f.sha256, content: f.content }, 200);
     },
   );
@@ -1092,7 +1086,7 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
   app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
     type: 'http',
     scheme: 'bearer',
-    description: 'Jeton de session (`POST /api/v1/auth/login`) ou jeton d’API (`POST /api/v1/tokens`).',
+    description: 'Session token (`POST /api/v1/auth/login`) or API token (`POST /api/v1/tokens`).',
   });
   app.doc31('/api/v1/openapi.json', openApiConfig(options.publicUrl));
   for (const p of ext.provisioning) p.mount(app);
@@ -1106,7 +1100,7 @@ export function openApiConfig(publicUrl?: string) {
       title: 'Agenteca Server',
       version: API_VERSION,
       description:
-        'Catalogue d’agents IA : recherche, contenu des paquets avant installation, publication, export en marketplaces natifs.',
+        'Catalog of AI agents: search, package content before installation, publication, export to native marketplaces.',
       license: { name: 'AGPL-3.0-only', identifier: 'AGPL-3.0-only' },
     },
     servers: [{ url: publicUrl ?? 'http://localhost:8080' }],

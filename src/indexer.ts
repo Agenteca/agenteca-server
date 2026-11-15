@@ -55,7 +55,7 @@ export function parseSource(source: string): { ref: DepRef; base: string } {
     throw new IndexError(
       422,
       'SOURCE_INVALID',
-      'la source doit être un dépôt git (propriétaire/dépôt ou URL), pas un chemin local',
+      'the source must be a git repository (owner/repo or URL), not a local path',
     );
   const { ref: _ref, ...rest } = ref;
   return { ref, base: canonicalDepString(rest) };
@@ -83,7 +83,7 @@ export async function indexPackage(
     throw new IndexError(
       422,
       'SOURCE_UNREACHABLE',
-      `dépôt inaccessible : ${e instanceof Error ? e.message : String(e)}`,
+      `repository unreachable: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
   const versions = versionsFromTags(refs.tags.keys(), shortName);
@@ -113,7 +113,7 @@ export async function indexPackage(
     throw new IndexError(
       422,
       'PACKAGE_INVALID',
-      `aucune version lisible : ${skipped.map((s) => `${s.ref} — ${s.reason}`).join(' ; ')}`,
+      `no readable version: ${skipped.map((s) => `${s.ref} — ${s.reason}`).join('; ')}`,
     );
   }
 
@@ -151,7 +151,7 @@ export async function indexPackage(
         throw new IndexError(
           409,
           'NAME_TAKEN',
-          `un paquet « ${name} » existe déjà dans ce catalogue avec une autre source`,
+          `a package "${name}" already exists in this catalog with another source`,
         );
       packageId = existing.id;
       db.prepare(

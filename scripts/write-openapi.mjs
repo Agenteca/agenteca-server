@@ -8,4 +8,4 @@ writeFileSync(
   JSON.stringify(buildOpenApiDocument(db), null, 2) + '\n',
 );
 db.close();
-console.log('openapi.json écrit');
+console.log('openapi.json written');
