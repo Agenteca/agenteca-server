@@ -1,18 +1,19 @@
-# Journal des modifications
+# Changelog
 
-Ce projet suit [Semantic Versioning](https://semver.org/lang/fr/). La version de l'API est celle d'`openapi.json`.
+This project follows [Semantic Versioning](https://semver.org/) and the
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. The API version is the one of `openapi.json`.
 
-## [Non publié]
+## [Unreleased]
 
 ## [0.1.0] - 2026-11-10
 
-### Ajouté
+### Added
 
-- Indexation d'un dépôt git : tags SemVer, manifeste, contenu et scan de chaque version.
-- Recherche, détail, versions et lecture des fichiers d'un paquet.
-- Comptes locaux, sessions, jetons d'API ; rôles administrateur, éditeur, lecteur.
-- Catalogues publics et privés, avec membres.
-- Export en marketplaces natifs (Claude Code, Codex, Copilot CLI, Cursor).
-- Contrat OpenAPI 3.1 généré depuis le code.
-- Points d'extension pour l'édition premium.
-- Images Docker et `compose.yaml`.
+- Indexing of a git repository: SemVer tags, manifest, content and scan of each version.
+- Search, details, versions and file reading of a package.
+- Local accounts, sessions, API tokens; administrator, editor and reader roles.
+- Public and private catalogs, with members.
+- Export to native marketplaces (Claude Code, Codex, Copilot CLI, Cursor).
+- OpenAPI 3.1 contract generated from the code.
+- Extension points for the premium edition.
+- Docker images and `compose.yaml`.

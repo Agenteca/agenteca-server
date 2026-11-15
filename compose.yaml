@@ -1,16 +1,16 @@
-# Auto-hébergement en une commande :  docker compose up -d
-# Le catalogue est servi sur http://localhost:3000, l'API sur http://localhost:8080.
+# Self-hosting in one command:  docker compose up -d
+# The catalog is served on http://localhost:3000, the API on http://localhost:8080.
 #
-# Ces images ne sont pas encore publiées. D'ici là, construisez-les depuis les
-# sources :  docker compose -f compose.yaml -f compose.dev.yaml up --build
+# These images are not published yet. Until then, build them from source:
+#   docker compose -f compose.yaml -f compose.dev.yaml up --build
 services:
   server:
     image: ghcr.io/agenteca/agenteca-server:0.1.0
     restart: unless-stopped
     environment:
       AGENTECA_PUBLIC_URL: ${AGENTECA_PUBLIC_URL:-http://localhost:8080}
-      # Premier démarrage seulement. Sans mot de passe, un mot de passe aléatoire
-      # est généré et affiché une fois dans les journaux (docker compose logs server).
+      # First start only. Without a password, a random password is generated
+      # and printed once in the logs (docker compose logs server).
       AGENTECA_ADMIN_EMAIL: ${AGENTECA_ADMIN_EMAIL:-admin@localhost}
       AGENTECA_ADMIN_PASSWORD: ${AGENTECA_ADMIN_PASSWORD:-}
     volumes:

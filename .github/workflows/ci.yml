@@ -19,12 +19,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Les dépôts Agenteca sont reliés par un espace de travail npm, comme en développement.
-      - name: Espace de travail
+      # The Agenteca repositories are linked through an npm workspace, as in development.
+      - name: Workspace
         run: |
           echo '{"private": true, "workspaces": ["agenteca-core", "agenteca-server"]}' > package.json
           npm install --no-audit --no-fund
-      - name: Construit agenteca-core
+      - name: Build agenteca-core
         run: npm run build -w agenteca-core
       - name: Lint
         run: npm run lint

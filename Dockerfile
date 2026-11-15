@@ -1,4 +1,4 @@
-# Image de production. Suppose @agenteca/core publié sur npm.
+# Production image. Assumes @agenteca/core is published on npm.
 # Tant que ce n'est pas le cas, utilisez docker/Dockerfile.workspace (voir README).
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
@@ -9,7 +9,7 @@ COPY src ./src
 RUN npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim
-# git est le seul outil externe : le serveur lit les dépôts, il n'exécute rien de ce qu'ils contiennent.
+# git is the only external tool: the server reads repositories, it runs nothing they contain.
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production AGENTECA_DATA_DIR=/data PORT=8080
 WORKDIR /app

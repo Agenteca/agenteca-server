@@ -1,26 +1,26 @@
 # Agenteca Server
 
-API REST et index du catalogue d'agents IA. Le serveur lit des dépôts git (tags, manifestes, contenu), les scanne et les rend cherchables. Il sert la CLI `ahub`, le site `agenteca-web` et les extensions.
+REST API and index of the AI agent catalog. The server reads git repositories (tags, manifests, content), scans them and makes them searchable. It serves the `ahub` CLI, the `agenteca-web` site and the editor extensions.
 
-> État : 0.1.0. Ni le paquet npm ni l'image Docker ne sont publiés.
+> Status: 0.1.0. Neither the npm package nor the Docker image is published.
 
-Le serveur **lit** les dépôts ; il n'exécute rien de ce qu'ils contiennent.
+The server **reads** repositories; it runs nothing they contain.
 
-## Démarrer
+## Getting started
 
-Avec Docker, une fois les images publiées :
+With Docker, once the images are published:
 
 ```bash
 docker compose up -d
 ```
 
-D'ici là, depuis les sources, avec les dépôts `agenteca-core`, `agenteca-server` et `agenteca-web` côte à côte :
+Until then, from source, with the `agenteca-core`, `agenteca-server` and `agenteca-web` repositories side by side:
 
 ```bash
 docker compose -f compose.yaml -f compose.dev.yaml up --build
 ```
 
-Sans Docker :
+Without Docker:
 
 ```bash
 npm install
@@ -31,95 +31,97 @@ npm run build
 ```
 
 ```bash
-AGENTECA_ADMIN_EMAIL=moi@exemple.org npm start
+AGENTECA_ADMIN_EMAIL=me@example.org npm start
 ```
 
-Au premier démarrage, le serveur crée un compte administrateur. Sans `AGENTECA_ADMIN_PASSWORD`, il génère un mot de passe et l'affiche **une seule fois** dans ses journaux.
+On first start, the server creates an administrator account. Without `AGENTECA_ADMIN_PASSWORD`, it generates a password and prints it **only once** in its logs.
 
-| Variable | Défaut | Rôle |
+| Variable | Default | Purpose |
 |---|---|---|
-| `PORT`, `HOST` | `8080`, `0.0.0.0` | Adresse d'écoute |
-| `AGENTECA_DATA_DIR` | `./data` | Base SQLite et cache git |
-| `AGENTECA_PUBLIC_URL` | `http://localhost:8080` | Adresse publique, reprise dans l'OpenAPI |
-| `AGENTECA_ADMIN_EMAIL`, `AGENTECA_ADMIN_PASSWORD` | `admin@localhost`, généré | Premier administrateur |
-| `AGENTECA_EE_MODULE` | `@agenteca/ee` | Module premium à charger s'il est installé |
+| `PORT`, `HOST` | `8080`, `0.0.0.0` | Listening address |
+| `AGENTECA_DATA_DIR` | `./data` | SQLite database and git cache |
+| `AGENTECA_PUBLIC_URL` | `http://localhost:8080` | Public address, used in the OpenAPI document |
+| `AGENTECA_ADMIN_EMAIL`, `AGENTECA_ADMIN_PASSWORD` | `admin@localhost`, generated | First administrator |
+| `AGENTECA_EE_MODULE` | `@agenteca/ee` | Premium module to load if it is installed |
 
-Placez le serveur derrière un proxy TLS : il ne gère pas HTTPS lui-même, et les jetons circulent dans l'en-tête `Authorization`.
+Put the server behind a TLS proxy: it does not handle HTTPS itself, and tokens travel in the `Authorization` header.
 
 ## API
 
-Le contrat est [`openapi.json`](openapi.json) (OpenAPI 3.1), aussi servi sur `/api/v1/openapi.json`. Il est généré depuis le code (`npm run openapi`) et un test échoue si le fichier versionné s'en écarte.
+The contract is [`openapi.json`](openapi.json) (OpenAPI 3.1), also served at `/api/v1/openapi.json`. It is generated from the code (`npm run openapi`) and a test fails if the committed file drifts from it.
 
-| Route | Rôle | Accès |
+API messages are in English: they are read by programs and administrators. Interfaces that show them to people (the web site, the extensions) translate their own texts.
+
+| Route | Purpose | Access |
 |---|---|---|
-| `GET /api/v1/packages?q=&tool=&catalog=` | Recherche | Public pour les catalogues publics |
-| `GET /api/v1/packages/{id}` | Détail | idem |
-| `GET /api/v1/packages/{id}/versions` | Versions indexées | idem |
-| `GET /api/v1/packages/{id}/versions/{version}` | Primitives, fichiers, constats du scan | idem |
-| `GET /api/v1/packages/{id}/versions/{version}/file?path=` | Texte d'un fichier | idem |
-| `POST /api/v1/packages` | Ajoute un dépôt au catalogue | Éditeur |
-| `POST /api/v1/packages/{id}/refresh` | Relit le dépôt | Éditeur |
-| `DELETE /api/v1/packages/{id}` | Retire un paquet | Administrateur |
-| `GET /api/v1/catalogs/{slug}/export/{format}` | Marketplace natif (`claude`, `codex`, `copilot`, `cursor`) | Comme la lecture |
-| `GET`/`POST /api/v1/catalogs`, `PUT`/`DELETE …/members/{userId}` | Catalogues et membres | Administrateur pour écrire |
+| `GET /api/v1/packages?q=&tool=&catalog=` | Search | Public for public catalogs |
+| `GET /api/v1/packages/{id}` | Details | same |
+| `GET /api/v1/packages/{id}/versions` | Indexed versions | same |
+| `GET /api/v1/packages/{id}/versions/{version}` | Primitives, files, scan findings | same |
+| `GET /api/v1/packages/{id}/versions/{version}/file?path=` | Text of a file | same |
+| `POST /api/v1/packages` | Adds a repository to the catalog | Editor |
+| `POST /api/v1/packages/{id}/refresh` | Reads the repository again | Editor |
+| `DELETE /api/v1/packages/{id}` | Removes a package | Administrator |
+| `GET /api/v1/catalogs/{slug}/export/{format}` | Native marketplace (`claude`, `codex`, `copilot`, `cursor`) | Same as reading |
+| `GET`/`POST /api/v1/catalogs`, `PUT`/`DELETE …/members/{userId}` | Catalogs and members | Administrator to write |
 | `POST /api/v1/auth/login`, `/logout`, `GET /api/v1/me` | Session | — |
-| `GET`/`POST`/`DELETE /api/v1/tokens` | Jetons d'API personnels | Connecté |
-| `GET`/`POST /api/v1/users` | Comptes | Administrateur |
+| `GET`/`POST`/`DELETE /api/v1/tokens` | Personal API tokens | Signed in |
+| `GET`/`POST /api/v1/users` | Accounts | Administrator |
 
-Exemple :
-
-```bash
-curl -X POST http://localhost:8080/api/v1/packages -H "Authorization: Bearer $JETON" -H 'Content-Type: application/json' -d '{"source":"acme/code-review"}'
-```
-
-Côté CLI, un serveur s'ajoute comme registre :
+Example:
 
 ```bash
-ahub registry add https://catalogue.exemple.org
+curl -X POST http://localhost:8080/api/v1/packages -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"source":"acme/code-review"}'
 ```
 
-## Rôles et catalogues
+On the CLI side, a server is added as a registry:
 
-Trois rôles, gratuits : **lecteur**, **éditeur** (publie), **administrateur** (retire, gère comptes et catalogues).
+```bash
+ahub registry add https://catalog.example.org
+```
 
-Un catalogue est **public** (lisible sans compte) ou **privé**. Dans un catalogue privé, seuls ses membres et les administrateurs ont un rôle ; pour les autres, il est indiscernable d'un catalogue absent (réponse 404).
+## Roles and catalogs
 
-## Export en marketplaces natifs
+Three roles, free of charge: **reader**, **editor** (publishes), **administrator** (removes, manages accounts and catalogs).
 
-`/api/v1/catalogs/{slug}/export/{format}` produit le `marketplace.json` attendu par Claude Code, Codex, Copilot CLI ou Cursor.
+A catalog is **public** (readable without an account) or **private**. In a private catalog, only its members and the administrators have a role; for everyone else, it cannot be told apart from a missing catalog (404 answer).
 
-Par défaut, seuls les paquets qui sont **aussi des plugins natifs** sont exportés : ces outils ne savent installer que leur propre disposition de plugin, pas un paquet OpenAPM. `?all=true` exporte tout ; les paquets non natifs restent installables par `ahub` ou `apm`.
+## Export to native marketplaces
 
-Limites : le format Cursor ne documente que des sources locales, donc un export Cursor de dépôts distants est vide. Les champs de la source `url` du format Codex ne sont pas confirmés par sa documentation.
+`/api/v1/catalogs/{slug}/export/{format}` produces the `marketplace.json` expected by Claude Code, Codex, Copilot CLI or Cursor.
 
-## Sécurité
+By default, only the packages that are **also native plugins** are exported: these tools can only install their own plugin layout, not an OpenAPM package. `?all=true` exports everything; non-native packages stay installable with `ahub` or `apm`.
 
-- Mots de passe hachés avec scrypt ; **seule l'empreinte** des jetons est stockée.
-- Sessions de 12 heures ; jetons d'API sans expiration, révocables.
-- La connexion répond de la même façon que le compte existe ou non.
-- Chaque version indexée est scannée (Unicode caché, motifs suspects) ; les constats sont exposés par l'API.
-- Journal d'audit : une ligne JSON par événement sur la sortie standard.
+Limits: the Cursor format only documents local sources, so a Cursor export of remote repositories is empty. The fields of the `url` source in the Codex format are not confirmed by its documentation.
 
-Non couvert en 0.1.0 : limitation du nombre de tentatives de connexion (à faire au niveau du proxy), rotation des jetons, suppression de comptes par l'API.
+## Security
 
-## Édition premium
+- Passwords hashed with scrypt; **only the hash** of tokens is stored.
+- 12-hour sessions; API tokens without expiry, revocable.
+- Sign-in answers the same way whether or not the account exists.
+- Every indexed version is scanned (hidden Unicode, suspicious patterns); findings are exposed by the API.
+- Audit log: one JSON line per event on standard output.
 
-Le serveur expose cinq points d'extension dans [`src/extensions.ts`](src/extensions.ts) : `AuthProvider` (SSO OIDC/SAML), `AccessPolicy` (rôles personnalisés, droits par équipe), `AuditSink` (journal d'audit), `PublishGate` (validation avant publication), `ProvisioningSource` (SCIM).
+Not covered in 0.1.0: rate limiting of sign-in attempts (to be done at the proxy), token rotation, account deletion through the API.
 
-Au démarrage, le serveur tente de charger `@agenteca/ee`. S'il est absent, les implémentations par défaut s'appliquent et rien ne manque à l'édition communautaire. S'il est présent mais défaillant, le serveur refuse de démarrer plutôt que de tourner sans les contrôles attendus.
+## Premium edition
 
-## Modèle de données
+The server exposes five extension points in [`src/extensions.ts`](src/extensions.ts): `AuthProvider` (OIDC/SAML SSO), `AccessPolicy` (custom roles, per-team rights), `AuditSink` (audit log), `PublishGate` (validation before publication), `ProvisioningSource` (SCIM).
 
-SQLite, migrations appliquées au démarrage (`src/db.ts`) : `users`, `tokens`, `catalogs`, `catalog_members`, `packages`, `package_versions`, `package_files`.
+At start-up, the server tries to load `@agenteca/ee`. If it is absent, the default implementations apply and the community edition lacks nothing. If it is present but broken, the server refuses to start rather than run without the expected controls.
 
-## Développement
+## Data model
+
+SQLite, migrations applied at start-up (`src/db.ts`): `users`, `tokens`, `catalogs`, `catalog_members`, `packages`, `package_versions`, `package_files`.
+
+## Development
 
 ```bash
 npm test
 ```
 
-Les tests créent de vrais dépôts git temporaires et une base en mémoire ; aucun accès réseau. En CI, `agenteca-core` est cloné à côté de ce dépôt : aucun paquet publié sur npm n'est nécessaire.
+The tests create real temporary git repositories and an in-memory database; no network access. In CI, `agenteca-core` is cloned next to this repository: no package published on npm is needed.
 
-## Licence
+## License
 
-AGPL-3.0. Les contributions demandent un accord de contribution (CLA), décrit dans le dépôt `.github` de l'organisation : il permet de brancher le module premium, propriétaire, sur ce serveur.
+AGPL-3.0. Contributions require a contributor license agreement (CLA), described in the `.github` repository of the organisation: it allows the proprietary premium module to plug into this server.
