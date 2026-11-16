@@ -117,6 +117,52 @@ describe('catalogue', () => {
     });
   });
 
+  it('lets the publisher name a package and state its tools, and keeps them on refresh', async () => {
+    // Two native plugins of different tools that both call themselves "agenteca".
+    const plugin = (tool: string) => ({
+      'plugin.json': JSON.stringify({
+        name: 'agenteca',
+        version: '0.1.0',
+        description: `Plugin for ${tool}.`,
+      }),
+      'skills/hub/SKILL.md': '---\nname: hub\ndescription: Use the catalog.\n---\nBody\n',
+    });
+    const claude = await gitRepo(plugin('Claude Code'), 'v0.1.0');
+    const codex = await gitRepo(plugin('Codex'), 'v0.1.0');
+    const h = await harness({
+      'github.com/acme/plugin-claude': claude,
+      'github.com/acme/plugin-codex': codex,
+    });
+    const first = await h.call('POST', '/api/v1/packages', {
+      token: h.tokens.editor,
+      body: { source: 'acme/plugin-claude', tools: ['claude'] },
+    });
+    expect(first.body.package).toMatchObject({ name: 'agenteca', latestVersion: '0.1.0', tools: ['claude'] });
+
+    const clash = await h.call('POST', '/api/v1/packages', {
+      token: h.tokens.editor,
+      body: { source: 'acme/plugin-codex' },
+    });
+    expect(clash.status).toBe(409);
+    expect(clash.body.error.message).toContain('"name" field');
+
+    const named = await h.call('POST', '/api/v1/packages', {
+      token: h.tokens.editor,
+      body: { source: 'acme/plugin-codex', name: 'agenteca-codex', tools: ['codex'] },
+    });
+    expect(named.body.package).toMatchObject({ name: 'agenteca-codex', tools: ['codex'] });
+
+    const refreshed = await h.call('POST', `/api/v1/packages/${first.body.package.id}/refresh`, {
+      token: h.tokens.editor,
+    });
+    expect(refreshed.body.package.tools).toEqual(['claude']);
+    const bad = await h.call('POST', '/api/v1/packages', {
+      token: h.tokens.editor,
+      body: { source: 'acme/plugin-codex', name: 'other', tools: ['emacs'] },
+    });
+    expect(bad.status).toBe(400);
+  });
+
   it('refuses invalid or unreadable sources', async () => {
     const empty = await gitRepo({ 'README.md': 'rien' });
     const h = await harness({ 'github.com/acme/vide': empty });

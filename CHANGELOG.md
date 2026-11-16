@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/) and the
 
 ## [Unreleased]
 
+### Added
+
+- `POST /api/v1/packages` accepts `tools`: the compatible tools of a package that does not declare them (for example a native plugin of a single tool). They are kept when the package is refreshed (database migration 2).
+
+### Changed
+
+- When a package name is already used by another source in a catalog, the error suggests the `name` field.
+
 ## [0.1.0] - 2026-11-10
 
 ### Added

@@ -1646,6 +1646,18 @@
                       "maxLength": 40
                     },
                     "maxItems": 20
+                  },
+                  "tools": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Tool"
+                    },
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "description": "Compatible tools, for a package that does not declare them (for example a native plugin of a single tool). Kept when the package is refreshed.",
+                    "example": [
+                      "claude"
+                    ]
                   }
                 },
                 "required": [

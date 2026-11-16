@@ -76,6 +76,8 @@ const MIGRATIONS: string[] = [
   CREATE INDEX idx_packages_catalog ON packages(catalog_id);
   CREATE INDEX idx_versions_package ON package_versions(package_id);
   `,
+  // 2: compatible tools stated by the publisher, kept across refreshes (null: inferred from the package).
+  `ALTER TABLE packages ADD COLUMN declared_tools TEXT`,
 ];
 
 /** Opens the database (file or `:memory:`) and applies the missing migrations. */
@@ -118,6 +120,8 @@ export interface PackageRow {
   description: string | null;
   license: string | null;
   tools: string;
+  /** Tools stated by the publisher (JSON array), or null when they are inferred from the package. */
+  declared_tools: string | null;
   tags: string;
   native_plugin: number;
   latest_version: string | null;

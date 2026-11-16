@@ -69,7 +69,7 @@ export async function indexPackage(
   db: Db,
   catalogId: number,
   source: string,
-  overrides: { name?: string; tags?: string[]; status?: 'published' | 'pending' },
+  overrides: { name?: string; tags?: string[]; tools?: string[]; status?: 'published' | 'pending' },
   opts: IndexerOptions = {},
 ): Promise<IndexResult> {
   const { ref, base } = parseSource(source);
@@ -123,7 +123,9 @@ export async function indexPackage(
   const declared = summary.declaredTargets?.filter((t) =>
     (SUPPORTED_TARGETS as readonly string[]).includes(t),
   );
-  const tools =
+  // Tools declared by the package itself; failing that, every supported tool. A publisher can state
+  // them explicitly (a native plugin of a single tool declares no target), and that choice is kept.
+  const inferredTools =
     declared && declared.length > 0 && !summary.declaredTargets!.includes('all')
       ? declared
       : [...SUPPORTED_TARGETS];
@@ -135,11 +137,16 @@ export async function indexPackage(
       .prepare('SELECT * FROM packages WHERE catalog_id = ? AND name = ?')
       .get(catalogId, name) as PackageRow | undefined;
     let packageId: number;
+    const statedTools: string[] | null =
+      overrides.tools ??
+      (existing?.declared_tools ? (JSON.parse(existing.declared_tools) as string[]) : null);
+    const tools = statedTools ?? inferredTools;
     const values = {
       source: base,
       description: summary.description ?? null,
       license: summary.license ?? null,
       tools: JSON.stringify(tools),
+      declared_tools: statedTools ? JSON.stringify(statedTools) : null,
       tags: JSON.stringify(overrides.tags ?? (existing ? (JSON.parse(existing.tags) as string[]) : [])),
       native_plugin: summary.layout === 'plugin' ? 1 : 0,
       latest_version: latest.version,
@@ -151,18 +158,18 @@ export async function indexPackage(
         throw new IndexError(
           409,
           'NAME_TAKEN',
-          `a package "${name}" already exists in this catalog with another source`,
+          `a package "${name}" already exists in this catalog with another source; give this one another name with the "name" field`,
         );
       packageId = existing.id;
       db.prepare(
-        `UPDATE packages SET description=@description, license=@license, tools=@tools, tags=@tags, native_plugin=@native_plugin,
+        `UPDATE packages SET description=@description, license=@license, tools=@tools, declared_tools=@declared_tools, tags=@tags, native_plugin=@native_plugin,
          latest_version=@latest_version, latest_ref=@latest_ref, status=@status, updated_at=@now WHERE id=@id`,
       ).run({ ...values, now, id: packageId });
     } else {
       const info = db
         .prepare(
-          `INSERT INTO packages (catalog_id, name, source, description, license, tools, tags, native_plugin, latest_version, latest_ref, status, created_at, updated_at)
-           VALUES (@catalog_id, @name, @source, @description, @license, @tools, @tags, @native_plugin, @latest_version, @latest_ref, @status, @now, @now)`,
+          `INSERT INTO packages (catalog_id, name, source, description, license, tools, declared_tools, tags, native_plugin, latest_version, latest_ref, status, created_at, updated_at)
+           VALUES (@catalog_id, @name, @source, @description, @license, @tools, @declared_tools, @tags, @native_plugin, @latest_version, @latest_ref, @status, @now, @now)`,
         )
         .run({ ...values, catalog_id: catalogId, name, now });
       packageId = Number(info.lastInsertRowid);

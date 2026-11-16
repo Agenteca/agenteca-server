@@ -845,6 +845,16 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
                   .regex(/^[a-z0-9][a-z0-9._-]{0,99}$/)
                   .optional(),
                 tags: z.array(z.string().max(40)).max(20).optional(),
+                tools: z
+                  .array(ToolSchema)
+                  .min(1)
+                  .max(4)
+                  .optional()
+                  .openapi({
+                    description:
+                      'Compatible tools, for a package that does not declare them (for example a native plugin of a single tool). Kept when the package is refreshed.',
+                    example: ['claude'],
+                  }),
               }),
             },
           },
@@ -876,7 +886,11 @@ export function createApp(options: AppOptions): OpenAPIHono<Env> {
         db,
         catalog.id,
         body.source,
-        { ...(body.name ? { name: body.name } : {}), ...(body.tags ? { tags: body.tags } : {}) },
+        {
+          ...(body.name ? { name: body.name } : {}),
+          ...(body.tags ? { tags: body.tags } : {}),
+          ...(body.tools ? { tools: body.tools } : {}),
+        },
         options.indexer,
       );
       const review = await ext.publishGate.review({
